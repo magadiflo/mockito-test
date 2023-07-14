@@ -497,3 +497,72 @@ class ExamenServiceImplTest {
     /* omitted code */
 }
 ````
+
+## Probando nuevas dependencias mock
+
+Creamos previamente una lista de preguntas en la clase **Data**:
+
+````java
+public class Data {
+    /* omitted code */
+    public static final List<String> QUESTIONS = List.of("Pregunta 1", "Pregunta 2", "Pregunta 3",
+            "Pregunta 4", "Pregunta 5", "Pregunta 6", "Pregunta 7", "Pregunta 8", "Pregunta 9",
+            "Pregunta 10");
+}
+````
+
+Nuestro nuevo método a testear quedaría de la siguiente forma:
+
+````java
+class ExamenServiceImplTest {
+    /* omitted code */
+
+    @Test
+    void findExamByNameWithQuestions() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);                                 // (1)
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);  // (2)
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Geometría");                      // (3)
+
+        assertEquals(10, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 10"));
+    }
+}
+````
+
+**Donde**
+
+- **(1)**, le decimos a mockito, que cuando se llame al **findAll()** del **examRepository** entonces que nos retorne la
+  lista completa de los exámenes: Data.EXAMS.
+- **(2)**, cuando se llame al método **findQuestionsByExamId()** del **questionRepository** y se le pase por argumento
+  **cualquier Long (anyLong)** entonces que nos retorne la lista de preguntas: Data.QUESTIONS.
+- **(3)**, es el método de la clase **ExamenServiceImpl** que estamos probando. Recordar que dicho método internamente
+  hace uso de los repositorios: **examRepository y questionRepository**, por eso es la necesidad de Mocker los
+  repositorios.
+
+Creando un método test para probar el lanzamiento de la excepción cuando un examen no es encontrado:
+
+````java
+class ExamenServiceImplTest {
+    /* omitted code */
+    @Test
+    void throwNoSuchElementExceptionIfNotExistsExam() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Lenguaje");
+        });
+
+        assertEquals(NoSuchElementException.class, exception.getClass());
+        assertEquals("¡No existe el exam Lenguaje buscado!", exception.getMessage());
+    }
+}
+````
+
+Observar que en el test anterior no necesitamos mockear el:
+
+> when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+Porque lo que estamos probando es el lanzamiento de la excepción **NoSuchElementException** y este lanzamiento debe
+ocurrir, según la implementación real, antes de llamar al **this.questionRepository.findQuestionsByExamId(...)**
+

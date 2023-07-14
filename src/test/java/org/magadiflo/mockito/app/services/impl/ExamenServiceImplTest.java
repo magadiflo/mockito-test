@@ -10,6 +10,7 @@ import org.magadiflo.mockito.app.services.IExamService;
 import org.magadiflo.mockito.app.source.Data;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,6 +53,24 @@ class ExamenServiceImplTest {
 
     @Test
     void findExamByNameWithQuestions() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
 
+        Exam exam = this.examService.findExamByNameWithQuestions("Geometría");
+
+        assertEquals(10, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 10"));
+    }
+
+    @Test
+    void throwNoSuchElementExceptionIfNotExistsExam() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Lenguaje");
+        });
+
+        assertEquals(NoSuchElementException.class, exception.getClass());
+        assertEquals("¡No existe el exam Lenguaje buscado!", exception.getMessage());
     }
 }
