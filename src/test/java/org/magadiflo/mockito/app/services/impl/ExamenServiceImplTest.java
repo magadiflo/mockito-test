@@ -1,13 +1,15 @@
 package org.magadiflo.mockito.app.services.impl;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.magadiflo.mockito.app.models.Exam;
 import org.magadiflo.mockito.app.repositories.IExamRepository;
 import org.magadiflo.mockito.app.repositories.IQuestionRepository;
-import org.magadiflo.mockito.app.services.IExamService;
 import org.magadiflo.mockito.app.source.Data;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -16,18 +18,15 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ExamenServiceImplTest {
+    @Mock
     private IExamRepository examRepository;
+    @Mock
     private IQuestionRepository questionRepository;
-    private IExamService examService;
 
-    @BeforeEach
-    void setUp() {
-        this.examRepository = mock(IExamRepository.class);
-        this.questionRepository = mock(IQuestionRepository.class);
-
-        this.examService = new ExamenServiceImpl(this.examRepository, this.questionRepository);
-    }
+    @InjectMocks
+    private ExamenServiceImpl examService;
 
     @Test
     void findExamByName() {
@@ -91,7 +90,6 @@ class ExamenServiceImplTest {
     @Test
     void throwNoSuchElementExceptionIfNotExistsExamUsingVerify() {
         when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");

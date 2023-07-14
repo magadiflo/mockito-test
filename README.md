@@ -627,3 +627,110 @@ class ExamenServiceImplTest {
 - **(2)**, mockito verifica que del **this.questionRepository** el método **findQuestionsByExamId(anyLong())** no se
   haya llamado nunca: **never()**.
 
+## Inyección de dependencia y anotaciones @Mock, @InjectMocks y @ExtendWith
+
+Recordemos que nosotros **estamos creando manualmente las instancias mockeadas de los repositories** y luego
+inyectándolos a la implementación concreta el ExamenServiceImpl dentro del **@BeforeEach:**
+
+````java
+class ExamenServiceImplTest {
+    private IExamRepository examRepository;             // Interfaz
+    private IQuestionRepository questionRepository;     // Interfaz
+    private IExamService examService;                   // Interfaz
+
+
+    @BeforeEach
+    void setUp() {
+        this.examRepository = mock(IExamRepository.class);
+        this.questionRepository = mock(IQuestionRepository.class);
+
+        this.examService = new ExamenServiceImpl(this.examRepository, this.questionRepository);
+    }
+}
+````
+
+Ahora, **usaremos las anotaciones proporcionadas por Mockito** para realizar inyección de dependencias de nuestros
+repositorios mockeados y luego usarlos para inyectar la clase que vamos a testear:
+
+````java
+class ExamenServiceImplTest {
+    @Mock
+    private IExamRepository examRepository;             // Interfaz
+    @Mock
+    private IQuestionRepository questionRepository;     // Interfaz
+
+    @InjectMocks
+    private ExamenServiceImpl examService;              // (1) Implementación concreta
+
+}
+````
+
+**DONDE**
+
+- **(1)**, aquí debemos usar una implementación concreta para que pueda hacer la inyección de los repositorios mockeados
+  con la anotación **@Mock**. Recordemos que la implementación concreta recibe por argumento del constructor los dos
+  repositorios: ``new ExamenServiceImpl(examRepository, questionRepository)`` estos argumentos son precisamente los
+  repositorios mockeados con **@Mock**. Si usamos una interfaz como el **IExamService** no dará un error. Por lo tanto,
+  ``para usar el @InjectMocks sí o sí debe ser con una implementación concreta`` y en automático Mockito inyectará los
+  dos repositorios anotados con @Mock.
+
+Ahora, necesitamos habilitar el uso de las anotaciones **@Mock e @InjectMocks**, para eso existen dos formas:
+
+### Forma 1. Habilitar anotaciones de Mockito para inyección de dependencia
+
+Podemos usar el método anotado con @BeforeEach y agregar el **MockitoAnnotations.openMocks(this)**, es decir le pasamos
+la instancia de esta clase test: ExamenServiceImplTest:
+
+````java
+class ExamenServiceImplTest {
+    @Mock
+    private IExamRepository examRepository;
+    @Mock
+    private IQuestionRepository questionRepository;
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this); //<-- habilita las anotaciones de mockito: @Mock, @InjectMocks
+    }
+    /* omitted tests */
+}
+````
+
+### Forma 2. Habilitar anotaciones de Mockito para inyección de dependencia
+
+La segunda forma es anotando la clase test con **@ExtendWith(MockitoExtension.class)**, para eso es importante como lo
+hicimos al principio del curso agregar la dependencia:
+
+````xml
+
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-junit-jupiter</artifactId>
+    <version>5.4.0</version>
+    <scope>test</scope>
+</dependency>
+````
+
+Entonces, nuestra clase de test quedaría de la siguiente manera:
+
+````java
+
+@ExtendWith(MockitoExtension.class) //<-- habilita las anotaciones de mockito: @Mock, @InjectMocks
+class ExamenServiceImplTest {
+    @Mock
+    private IExamRepository examRepository;
+    @Mock
+    private IQuestionRepository questionRepository;
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+
+    /* omitted tests */
+}
+````
+
+Ejecutamos las pruebas **con cualquiera de las dos formas** y veremos que todo está funcionando correctamente. En mi
+caso, optaré por quedarme con la segunda forma.
