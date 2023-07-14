@@ -71,3 +71,52 @@ public interface IExamService {
     Exam findExamByName(String name);
 }
 ````
+
+## Implementando la clase Service
+
+Crearemos una implementación de la interfaz service y del repository, para empezar a realizar las pruebas. Entonces,
+comenzamos implementando una clase concreta de la interfaz **IExamRepository**:
+
+````java
+public class ExamRepositoryImpl implements IExamRepository {
+    @Override
+    public List<Exam> findAll() {
+        return List.of(
+                new Exam(1L, "Aritmética"),
+                new Exam(2L, "Geometría"),
+                new Exam(3L, "Álgebra"),
+                new Exam(4L, "Trigonometría"),
+                new Exam(5L, "Programación"),
+                new Exam(6L, "Bases de Datos"),
+                new Exam(7L, "Estructura de datos"),
+                new Exam(8L, "Java 17"));
+    }
+}
+````
+
+La implementación anterior, solo será como nuestra **fuente de datos**, como si el **findAll()** fuese a consultar datos
+de una base de datos, pero nosotros lo tendremos **hard codeado** en la clase.
+
+Ahora, toca crear una implementación de la interfaz **IExamService** e implementar el método **findExamByName()**:
+
+````java
+public class ExamenServiceImpl implements IExamService {
+    private final IExamRepository examRepository;
+
+    public ExamenServiceImpl(IExamRepository examRepository) {
+        this.examRepository = examRepository;
+    }
+
+    @Override
+    public Exam findExamByName(String name) {
+        return this.examRepository.findAll().stream()
+                .filter(exam -> exam.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No existe el examen: " + name));
+    }
+}
+````
+
+Listo, ya tenemos implementado el método **findExamByName(String name)** de nuestra clase **ExamenServiceImpl**, ahora
+el siguiente paso es **realizar la prueba unitaria del método implementado**.
+
