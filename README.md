@@ -378,3 +378,87 @@ class ExamenServiceImplTest {
 Observamos en el código anterior que las líneas repetidas los colocamos dentro del método anotado con **@BeforeEach**,
 y para que los objetos **examRepository** y **examService** sean reutilizados en los métodos test, los declaramos como
 atributos privados de manera global, de esa manera se reutilizarán nuestras dependencias mockeadas.
+
+## Agregando nuevas dependencias mock
+
+Crearemos un nuevo repositorio para las preguntas **(Question)**, definimos un método que nos permitirá buscar la lista
+de preguntas según el identificador del examen proporcionado:
+
+````java
+public interface IQuestionRepository {
+    List<String> findQuestionsByExamId(Long id);
+}
+````
+
+Creamos un nuevo método en la interfaz **IExamenService** llamado **findExamByNameWithQuestions()** cuya implementación
+retornará un examen pero conteniendo el listado de sus preguntas:
+
+````java
+public interface IExamService {
+    Optional<Exam> findExamByName(String name);
+
+    Exam findExamByNameWithQuestions(String name);
+}
+````
+
+Implementamos el nuevo método en la clase **ExamenServiceImpl**, para ello previamente habría que definir un atributo
+de la interfaz **IQuestionRepository** cuya implementación será pasado por constructor, luego simplemente toca
+implementar el método **findExamByNameWithQuestions(String name):**
+
+````java
+public class ExamenServiceImpl implements IExamService {
+    private final IExamRepository examRepository;
+    private final IQuestionRepository questionRepository;
+
+    public ExamenServiceImpl(IExamRepository examRepository, IQuestionRepository questionRepository) {
+        this.examRepository = examRepository;
+        this.questionRepository = questionRepository;
+    }
+
+    @Override
+    public Optional<Exam> findExamByName(String name) {
+        return this.examRepository.findAll().stream()
+                .filter(exam -> exam.getName().equals(name))
+                .findFirst();
+    }
+
+    @Override
+    public Exam findExamByNameWithQuestions(String name) {
+        Optional<Exam> examOptional = this.findExamByName(name);
+        if (examOptional.isEmpty()) {
+            throw new NoSuchElementException(String.format("¡No existe el exam %s buscado!", name));
+        }
+        Exam exam = examOptional.get();
+        List<String> questions = this.questionRepository.findQuestionsByExamId(exam.getId());
+        exam.setQuestions(questions);
+        return exam;
+    }
+}
+````
+
+En el código anterior mostramos toda la clase **ExamenServiceImpl** incluyendo la implementación del nuevo método
+agregado **findExamByNameWithQuestions()**. Observar que dicha implementación retorna un examen conteniendo la lista
+de preguntas asociadas a él, además si no existe el examen buscado, se lanzará una excepción.
+
+Finalmente, como última modificación habría que agregar la nueva interfaz que creamos **IQuestionRepository** en nuestra
+clase de prueba **ExamenServiceImplTest,** ya que ahora al definir el objeto del **ExamenServiceImpl()** está esperando
+recibir por constructor no solo la implementación del IExamRepository, sino también una implementación del
+**IQuestionRepository**. Dicha implementación también será simulada con **Mockito**.
+
+````java
+class ExamenServiceImplTest {
+    private IExamRepository examRepository;
+    private IQuestionRepository questionRepository;
+    private IExamService examService;
+
+    @BeforeEach
+    void setUp() {
+        this.examRepository = mock(IExamRepository.class);
+        this.questionRepository = mock(IQuestionRepository.class);
+
+        this.examService = new ExamenServiceImpl(this.examRepository, this.questionRepository);
+    }
+
+    /* omitted tests */
+}
+````

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.magadiflo.mockito.app.models.Exam;
 import org.magadiflo.mockito.app.repositories.IExamRepository;
+import org.magadiflo.mockito.app.repositories.IQuestionRepository;
 import org.magadiflo.mockito.app.services.IExamService;
 
 import java.util.List;
@@ -15,12 +16,15 @@ import static org.mockito.Mockito.*;
 
 class ExamenServiceImplTest {
     private IExamRepository examRepository;
+    private IQuestionRepository questionRepository;
     private IExamService examService;
 
     @BeforeEach
     void setUp() {
         this.examRepository = mock(IExamRepository.class);
-        this.examService = new ExamenServiceImpl(this.examRepository);
+        this.questionRepository = mock(IQuestionRepository.class);
+
+        this.examService = new ExamenServiceImpl(this.examRepository, this.questionRepository);
     }
 
     @Test
