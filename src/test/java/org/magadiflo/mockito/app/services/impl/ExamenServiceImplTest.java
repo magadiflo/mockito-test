@@ -1,5 +1,6 @@
 package org.magadiflo.mockito.app.services.impl;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.magadiflo.mockito.app.models.Exam;
@@ -13,12 +14,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ExamenServiceImplTest {
+    private IExamRepository examRepository;
+    private IExamService examService;
+
+    @BeforeEach
+    void setUp() {
+        this.examRepository = mock(IExamRepository.class);
+        this.examService = new ExamenServiceImpl(this.examRepository);
+    }
 
     @Test
     void findExamByName() {
-        IExamRepository examRepository = mock(IExamRepository.class);
-        IExamService examService = new ExamenServiceImpl(examRepository);
-
         List<Exam> exams = List.of(
                 new Exam(1L, "Aritmética"),
                 new Exam(2L, "Geometría"),
@@ -28,9 +34,9 @@ class ExamenServiceImplTest {
                 new Exam(6L, "Bases de Datos"),
                 new Exam(7L, "Estructura de datos"),
                 new Exam(8L, "Java 17"));
-        when(examRepository.findAll()).thenReturn(exams);
+        when(this.examRepository.findAll()).thenReturn(exams);
 
-        Optional<Exam> optionalExam = examService.findExamByName("Aritmética");
+        Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
 
         assertTrue(optionalExam.isPresent());
         assertEquals(1L, optionalExam.get().getId());
@@ -40,13 +46,10 @@ class ExamenServiceImplTest {
     @Test
     @DisplayName("Retorna un optional vacío ya que no existe ningún elemento en la lista")
     void findExamByNameReturnOptionalEmpty() {
-        IExamRepository examRepository = mock(IExamRepository.class);
-        IExamService examService = new ExamenServiceImpl(examRepository);
-
         List<Exam> exams = List.of();
-        when(examRepository.findAll()).thenReturn(exams);
+        when(this.examRepository.findAll()).thenReturn(exams);
 
-        Optional<Exam> optionalExam = examService.findExamByName("Aritmética");
+        Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
 
         assertTrue(optionalExam.isEmpty());
     }

@@ -331,3 +331,50 @@ Como podemos observar en los dos test anteriores, no necesitamos ir a la impleme
 según nuestras necesidades, tan solo usando **Mockito simularemos el comportamiento de los métodos cuyo objeto que la
 contiene es una dependencia de la clase a probar, en nuestro caso el ExamServiceImpl (clase a ser probada), depende del
 objeto IExamRepository y es este último quien tiene el método que simularemos con Mockito**
+
+## Refactorizando nuestra clase ExamenServiceImplTest
+
+Podemos refactorizar nuestra clase **ExamenServiceImplTest**, reutilizando parte del código que se repite constantemente
+en los métodos test, por ejemplo el ``IExamRepository examRepository = mock(IExamRepository.class);`` y también
+``IExamService examService = new ExamenServiceImpl(examRepository);`` se están repitiendo constantemente en los métodos
+test. Podemos usar la anotación del ciclo de vida **@BeforeEach** que aprendimos en **JUnit 5**. Esta repetición no es
+mera casualidad, recordemos que estamos probando la clase **ExamenServiceImpl** por lo tanto sí o sí vamos a requerir
+simular sus dependencias en todos los métodos test.
+
+````java
+class ExamenServiceImplTest {
+    private IExamRepository examRepository;
+    private IExamService examService;
+
+    @BeforeEach
+    void setUp() {
+        this.examRepository = mock(IExamRepository.class);
+        this.examService = new ExamenServiceImpl(this.examRepository);
+    }
+
+    @Test
+    void findExamByName() {
+        List<Exam> exams = List.of(/* omitted elements */);
+        when(this.examRepository.findAll()).thenReturn(exams);
+
+        Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
+
+        /* omitted assertions */
+    }
+
+    @Test
+    @DisplayName("Retorna un optional vacío ya que no existe ningún elemento en la lista")
+    void findExamByNameReturnOptionalEmpty() {
+        List<Exam> exams = List.of();
+        when(this.examRepository.findAll()).thenReturn(exams);
+
+        Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
+
+        assertTrue(optionalExam.isEmpty());
+    }
+}
+````
+
+Observamos en el código anterior que las líneas repetidas los colocamos dentro del método anotado con **@BeforeEach**,
+y para que los objetos **examRepository** y **examService** sean reutilizados en los métodos test, los declaramos como
+atributos privados de manera global, de esa manera se reutilizarán nuestras dependencias mockeadas.
