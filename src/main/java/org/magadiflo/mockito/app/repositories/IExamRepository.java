@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface IExamRepository {
     List<Exam> findAll();
+
+    Exam saveExam(Exam exam);
 }

@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -102,4 +103,34 @@ class ExamenServiceImplTest {
         verify(this.questionRepository, never()).findQuestionsByExamId(anyLong());
     }
 
+    @Test
+    void saveExamWithoutQuestions() {
+        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(Data.EXAM);
+        Exam examDB = this.examService.saveExam(Data.EXAM);
+
+        assertNotNull(examDB);
+        assertEquals(9L, examDB.getId());
+        assertEquals("Docker", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));
+        verify(this.questionRepository, never()).saveQuestions(anyList());
+    }
+
+    @Test
+    void saveExamWithQuestions() {
+        Exam exam = Data.EXAM;
+        exam.setQuestions(Data.QUESTIONS);
+
+        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(exam);
+        doNothing().when(this.questionRepository).saveQuestions(anyList());
+
+        Exam examDB = this.examService.saveExam(exam);
+
+        assertNotNull(examDB);
+        assertEquals(9L, examDB.getId());
+        assertEquals("Docker", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));
+        verify(this.questionRepository).saveQuestions(anyList());
+    }
 }

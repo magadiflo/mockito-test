@@ -734,3 +734,113 @@ class ExamenServiceImplTest {
 
 Ejecutamos las pruebas **con cualquiera de las dos formas** y veremos que todo está funcionando correctamente. En mi
 caso, optaré por quedarme con la segunda forma.
+
+## Realizando más pruebas del repositorio con el método guardar
+
+Para eso debemos definir los métodos en las interfaces:
+
+````java
+public interface IExamRepository {
+    /* omitted method */
+    Exam saveExam(Exam exam);
+}
+````
+
+````java
+public interface IQuestionRepository {
+    /* omitted method */
+    void saveQuestions(List<String> questions);
+}
+````
+
+````java
+public interface IExamService {
+    /* omitted methods*/
+    Exam saveExam(Exam exam);
+}
+
+````
+
+Ahora toca implementar el método **saveExam()** en la clase concreta **ExamenServiceImpl**:
+
+````java
+public class ExamenServiceImpl implements IExamService {
+    @Override
+    public Exam saveExam(Exam exam) {
+        List<String> questions = exam.getQuestions();
+        if (!questions.isEmpty()) {
+            this.questionRepository.saveQuestions(questions);
+        }
+        return this.examRepository.saveExam(exam);
+    }
+}
+````
+
+Listo, hasta este momento ya tenemos implementado el método **saveExam()** de la clase concreta **ExamenServiceImpl**,
+llega el momento de crearle un test para probar dicho método:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void saveExamWithoutQuestions() {
+        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(Data.EXAM);  // (1)
+        Exam examDB = this.examService.saveExam(Data.EXAM);                         // (2)
+
+        assertNotNull(examDB);
+        assertEquals(9L, examDB.getId());
+        assertEquals("Docker", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));                      // (3)
+        verify(this.questionRepository, never()).saveQuestions(anyList());          // (4)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** le decimos a mockito que cuando el **this.examRepository** haga un **saveExam(...)** y se le pase por
+  parámetro cualquier examen o sea un **any(Exam.class)**, entonces que nos retorne el **Data.EXAM**.
+- **(2)** es el método que vamos a probar de la clase de servicio **ExamenServiceImpl**.
+- **(3)** le decimos a mockito que verifique que del **this.examRepository** su método **saveExam()** con un parámetro *
+  *any(Exam.class)** haya sido llamado una vez (por defecto).
+- **(4)** le decimos a mockito que verifique que del **this.questionRepository** su método **saveQuestions()** que
+  recibe un parámetro de una lista de objetos, no interesa cuál, solo que recibe una lista **anyList()** nunca se haya
+  llamado, es decir **never()**. Esto debe ser cierto, ya que el examen que guardamos no tiene una lista de preguntas.
+
+Ahora crearemos un método test que guarde un examen que tiene preguntas:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void saveExamWithQuestions() {
+        Exam exam = Data.EXAM;
+        exam.setQuestions(Data.QUESTIONS);
+
+        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(exam);
+        doNothing().when(this.questionRepository).saveQuestions(anyList());     // (1)
+
+        Exam examDB = this.examService.saveExam(exam);
+
+        assertNotNull(examDB);
+        assertEquals(9L, examDB.getId());
+        assertEquals("Docker", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));      // (2)
+        verify(this.questionRepository).saveQuestions(anyList());   // (3)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)**, como el método saveQuestions(...) retorna un void, entonces usando el **doNothing()** le decimos a mockito
+  que no haga nada cuando del **this.questionRepository** se llame a su método **saveQuestions(anyList())**.
+- **(2) y (3)**, le decimos a mockito que verifique que los métodos de dichos repositorios se hayan llamado.
