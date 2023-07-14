@@ -73,4 +73,35 @@ class ExamenServiceImplTest {
         assertEquals(NoSuchElementException.class, exception.getClass());
         assertEquals("¡No existe el exam Lenguaje buscado!", exception.getMessage());
     }
+
+    @Test
+    void findExamByNameWithQuestionsUsingVerify() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Geometría");
+
+        assertEquals(10, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 10"));
+
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(anyLong());
+    }
+
+    @Test
+    void throwNoSuchElementExceptionIfNotExistsExamUsingVerify() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Lenguaje");
+        });
+
+        assertEquals(NoSuchElementException.class, exception.getClass());
+        assertEquals("¡No existe el exam Lenguaje buscado!", exception.getMessage());
+
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository, never()).findQuestionsByExamId(anyLong());
+    }
+
 }

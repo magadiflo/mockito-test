@@ -566,3 +566,64 @@ Observar que en el test anterior no necesitamos mockear el:
 Porque lo que estamos probando es el lanzamiento de la excepción **NoSuchElementException** y este lanzamiento debe
 ocurrir, según la implementación real, antes de llamar al **this.questionRepository.findQuestionsByExamId(...)**
 
+## Probando con verify de Mockito
+
+**Verify** nos permite "verificar" si nuestro método mockeado ha sido ejecutado el número de veces que le hayamos
+definido.
+
+````java
+class ExamenServiceImplTest {
+    @Test
+    void findExamByNameWithQuestionsUsingVerify() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Geometría");
+
+        assertEquals(10, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 10"));
+
+        verify(this.examRepository).findAll();                              // (1)
+        verify(this.questionRepository).findQuestionsByExamId(anyLong());   // (2)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)**, mockito verifica que del **this.examRepository** se haya llamado al método **findAll()**.
+- **(2)**, mockito verifica que del **this.questionRepository** se haya llamado al método
+  **findQuestionsByExamId(anyLong())**.
+- En ambos verify, **por defecto el número de veces que debe ser llamado cada método es 1 vez**, más adelante veremos
+  cómo definirle el número de veces que debe ser llamada algún método usando el método estático de **mockito.times()**.
+
+Creamos otro test donde busquemos un examen que no existe, debemos verificar que el **this.examRepository.findAll()**
+sí sea llamado, mientras que el **this.questionRepository.findQuestionsByExamId(anyLong())** no debe ser llamado, ya que
+como no existe el examen, se lanza la excepción, por lo tanto nunca llega al método **findQuestionsByExamId(anyLong())**
+
+````java
+class ExamenServiceImplTest {
+    @Test
+    void throwNoSuchElementExceptionIfNotExistsExamUsingVerify() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Lenguaje");
+        });
+
+        assertEquals(NoSuchElementException.class, exception.getClass());
+        assertEquals("¡No existe el exam Lenguaje buscado!", exception.getMessage());
+
+        verify(this.examRepository).findAll();                                      // (1)
+        verify(this.questionRepository, never()).findQuestionsByExamId(anyLong());  // (2)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)**, mockito verifica que del **this.examRepository** se haya llamado al método **findAll()**.
+- **(2)**, mockito verifica que del **this.questionRepository** el método **findQuestionsByExamId(anyLong())** no se
+  haya llamado nunca: **never()**.
+
