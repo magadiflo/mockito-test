@@ -462,3 +462,38 @@ class ExamenServiceImplTest {
     /* omitted tests */
 }
 ````
+
+## Refactorizando clase de prueba ExamenServiceImplTest
+
+Crearemos una clase que contenga la lista de exámenes para poder reutilizarlas en los distintos métodos test, para eso
+creamos en:
+
+````java
+// test/java/org/magadiflo/mockito/app/source/
+
+public class Data {
+    public static final List<Exam> EXAMS = List.of(
+            new Exam(1L, "Aritmética"),
+            new Exam(2L, "Geometría"),
+            new Exam(3L, "Álgebra"),
+            new Exam(4L, "Trigonometría"),
+            new Exam(5L, "Programación"),
+            new Exam(6L, "Bases de Datos"),
+            new Exam(7L, "Estructura de datos"),
+            new Exam(8L, "Java 17"));
+}
+````
+
+Ahora, solo reemplazamos en los test que usan la lista para que la usen de la **Data.EXAMS**:
+
+````java
+class ExamenServiceImplTest {
+    /* omitted code */
+    @Test
+    void findExamByName() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        /* omitted code */
+    }
+    /* omitted code */
+}
+````

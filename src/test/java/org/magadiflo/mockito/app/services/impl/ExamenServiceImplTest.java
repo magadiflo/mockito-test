@@ -7,6 +7,7 @@ import org.magadiflo.mockito.app.models.Exam;
 import org.magadiflo.mockito.app.repositories.IExamRepository;
 import org.magadiflo.mockito.app.repositories.IQuestionRepository;
 import org.magadiflo.mockito.app.services.IExamService;
+import org.magadiflo.mockito.app.source.Data;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,16 +30,7 @@ class ExamenServiceImplTest {
 
     @Test
     void findExamByName() {
-        List<Exam> exams = List.of(
-                new Exam(1L, "Aritmética"),
-                new Exam(2L, "Geometría"),
-                new Exam(3L, "Álgebra"),
-                new Exam(4L, "Trigonometría"),
-                new Exam(5L, "Programación"),
-                new Exam(6L, "Bases de Datos"),
-                new Exam(7L, "Estructura de datos"),
-                new Exam(8L, "Java 17"));
-        when(this.examRepository.findAll()).thenReturn(exams);
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
 
         Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
 
@@ -56,5 +48,10 @@ class ExamenServiceImplTest {
         Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
 
         assertTrue(optionalExam.isEmpty());
+    }
+
+    @Test
+    void findExamByNameWithQuestions() {
+
     }
 }
