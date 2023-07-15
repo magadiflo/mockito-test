@@ -844,3 +844,71 @@ class ExamenServiceImplTest {
 - **(1)**, como el método saveQuestions(...) retorna un void, entonces usando el **doNothing()** le decimos a mockito
   que no haga nada cuando del **this.questionRepository** se llame a su método **saveQuestions(anyList())**.
 - **(2) y (3)**, le decimos a mockito que verifique que los métodos de dichos repositorios se hayan llamado.
+
+## Test del id incremental en el método guardar usando Invocation Argument
+
+Cuando guardamos un examen, este previamente no tiene un identificador, luego de que se haya guardado en la base de
+datos, lo que se devuelve es un examen con el id poblado. Entonces, podemos hacer un poco más real la prueba unitaria,
+enviando a guardar un examen sin id pero al momento de recuperarla debemos ver que el examen guardado ya viene con id.
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void saveExamWithQuestionsReturnExamWithId() {
+        // given
+        Exam exam = Data.EXAM_WHITOUT_ID;
+        exam.setQuestions(Data.QUESTIONS);
+
+        when(this.examRepository.saveExam(any(Exam.class))).then(new Answer<Exam>() {
+            Long sequence = 8L;
+
+            @Override
+            public Exam answer(InvocationOnMock invocation) throws Throwable {
+                Exam examToSave = invocation.getArgument(0);
+                examToSave.setId(sequence++);
+                return examToSave;
+            }
+        });
+        doNothing().when(this.questionRepository).saveQuestions(anyList());
+
+        // when
+        Exam examDB = this.examService.saveExam(exam);
+
+        // then
+        assertNotNull(examDB);
+        assertEquals(8L, examDB.getId());
+        assertEquals("Kubernetes", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));
+        verify(this.questionRepository).saveQuestions(anyList());
+    }
+}
+````
+
+Del test anterior, el código que nos interesa es el siguiente:
+
+````
+when(this.examRepository.saveExam(any(Exam.class))).then(new Answer<Exam>() {
+    Long sequence = 8L;
+
+    @Override
+    public Exam answer(InvocationOnMock invocation) throws Throwable {
+        Exam examToSave = invocation.getArgument(0);
+        examToSave.setId(sequence++);
+        return examToSave;
+    }
+});
+````
+
+Lo que hace el código anterior es decirle a Mockito, cuando se llame al **this.examRepository** su método
+**saveExam(any(Exam.class))** enviándole por argumento un examen a guardar, entonces él dará una nueva respuesta
+``then(new Answer<Exam>() {...}``. El parámetro **invocation** contiene en el argument con índice 0 (cero) el examen que
+se le pasa en el método real: ``this.examRepository.saveExam(exam)``. Obtenemos el examen pasado y le asignamos un
+identificador, podría ser cualquiera, pero en este caso le decimos ``sequence++`` por si queremos ejecutar varias veces
+el método save. Finalmente, se retornará el examen con un identificador ya establecido y es el que recibiremos en la
+variable **examenDB**.
+

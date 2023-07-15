@@ -9,7 +9,9 @@ import org.magadiflo.mockito.app.repositories.IQuestionRepository;
 import org.magadiflo.mockito.app.source.Data;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,6 +131,36 @@ class ExamenServiceImplTest {
         assertNotNull(examDB);
         assertEquals(9L, examDB.getId());
         assertEquals("Docker", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));
+        verify(this.questionRepository).saveQuestions(anyList());
+    }
+
+    @Test
+    void saveExamWithQuestionsReturnExamWithId() {
+        // given
+        Exam exam = Data.EXAM_WHITOUT_ID;
+        exam.setQuestions(Data.QUESTIONS);
+
+        when(this.examRepository.saveExam(any(Exam.class))).then(new Answer<Exam>() {
+            Long sequence = 8L;
+
+            @Override
+            public Exam answer(InvocationOnMock invocation) throws Throwable {
+                Exam examToSave = invocation.getArgument(0);
+                examToSave.setId(sequence++);
+                return examToSave;
+            }
+        });
+        doNothing().when(this.questionRepository).saveQuestions(anyList());
+
+        // when
+        Exam examDB = this.examService.saveExam(exam);
+
+        // then
+        assertNotNull(examDB);
+        assertEquals(8L, examDB.getId());
+        assertEquals("Kubernetes", examDB.getName());
 
         verify(this.examRepository).saveExam(any(Exam.class));
         verify(this.questionRepository).saveQuestions(anyList());

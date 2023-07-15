@@ -20,4 +20,5 @@ public class Data {
             "Pregunta 10");
 
     public static final Exam EXAM = new Exam(9L, "Docker");
+    public static final Exam EXAM_WHITOUT_ID = new Exam(null, "Kubernetes");
 }
