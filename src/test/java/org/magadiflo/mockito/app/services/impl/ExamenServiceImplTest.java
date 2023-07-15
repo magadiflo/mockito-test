@@ -165,4 +165,18 @@ class ExamenServiceImplTest {
         verify(this.examRepository).saveExam(any(Exam.class));
         verify(this.questionRepository).saveQuestions(anyList());
     }
+
+    @Test
+    void workingWithExceptions() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_ID_NULL);
+        when(this.questionRepository.findQuestionsByExamId(isNull())).thenThrow(IllegalArgumentException.class);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Aritmética");
+        });
+
+        assertEquals(IllegalArgumentException.class, exception.getClass());
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(isNull());
+    }
 }

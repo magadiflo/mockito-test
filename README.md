@@ -912,3 +912,47 @@ identificador, podría ser cualquiera, pero en este caso le decimos ``sequence++
 el método save. Finalmente, se retornará el examen con un identificador ya establecido y es el que recibiremos en la
 variable **examenDB**.
 
+## Comprobaciones de excepciones usando when y thenThrow
+
+Necesitamos crear una lista de exámenes que tengan como id = null:
+
+````java
+public class Data {
+    public static final List<Exam> EXAMS_ID_NULL = List.of(
+            new Exam(null, "Aritmética"),
+            new Exam(null, "Geometría"),
+            new Exam(null, "Álgebra"));
+}
+````
+
+Creamos nuestro test para ver cómo mockito trabaja con las excepciones:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void workingWithExceptions() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_ID_NULL);
+        when(this.questionRepository.findQuestionsByExamId(isNull())).thenThrow(IllegalArgumentException.class);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Aritmética");
+        });
+
+        assertEquals(IllegalArgumentException.class, exception.getClass());
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(isNull());
+    }
+}
+````
+
+Del test anterior, estamos mockeando cuando se llame al **this.examRepository.findAll()** nos retorne una lista de
+exámenes con id = null, también le decimos a mockito que si se llama al
+**this.questionRepository.findQuestionsByExamId(isNull())** cuyo argumento pasado sea null, entonces que nos retorne
+una excepción del tipo **IllegalArgumentException**. Finalmente usando el **assertThrows** de JUnit capturamos la
+excepción que nos debería lanzar, porque cuando busca el examen **Aritmética** sí lo va a encontrar, pero tendrá su
+identificador igual a null, por lo tanto cuando se busque usando el método **findQuestionsByExamId()** el identificador
+pasado será null, es allí donde entra el segundo método mockeado lanzándonos el **IllegalArgumentException**.

@@ -15,6 +15,11 @@ public class Data {
             new Exam(7L, "Estructura de datos"),
             new Exam(8L, "Java 17"));
 
+    public static final List<Exam> EXAMS_ID_NULL = List.of(
+            new Exam(null, "Aritmética"),
+            new Exam(null, "Geometría"),
+            new Exam(null, "Álgebra"));
+
     public static final List<String> QUESTIONS = List.of("Pregunta 1", "Pregunta 2", "Pregunta 3",
             "Pregunta 4", "Pregunta 5", "Pregunta 6", "Pregunta 7", "Pregunta 8", "Pregunta 9",
             "Pregunta 10");
