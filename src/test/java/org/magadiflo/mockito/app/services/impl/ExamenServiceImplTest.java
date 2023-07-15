@@ -179,4 +179,16 @@ class ExamenServiceImplTest {
         verify(this.examRepository).findAll();
         verify(this.questionRepository).findQuestionsByExamId(isNull());
     }
+
+    @Test
+    void argumentMatchersTest() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(argThat(arg -> arg != null && arg.equals(1L)));
+        verify(this.questionRepository).findQuestionsByExamId(eq(1L));
+    }
 }

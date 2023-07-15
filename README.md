@@ -956,3 +956,46 @@ una excepción del tipo **IllegalArgumentException**. Finalmente usando el **ass
 excepción que nos debería lanzar, porque cuando busca el examen **Aritmética** sí lo va a encontrar, pero tendrá su
 identificador igual a null, por lo tanto cuando se busque usando el método **findQuestionsByExamId()** el identificador
 pasado será null, es allí donde entra el segundo método mockeado lanzándonos el **IllegalArgumentException**.
+
+## Argument matchers
+
+El **Argument matchers** es una característica de mockito que permite saber si coincide el valor real que se pasa por
+argumento en el método que se está probando y lo comparamos con los definidos en el mock (when o verify), es decir,
+son utilidades que se utilizan para verificar los argumentos pasados a los métodos simulados durante las pruebas
+unitarias.
+
+Hay varios tipos de Argument Matchers disponibles en Mockito, como **any(), eq(), isNull(), isNotNull(), anyLong(),
+etc.**
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void argumentMatchersTest() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(argThat(arg -> arg != null && arg.equals(1L)));   // (1)
+        verify(this.questionRepository).findQuestionsByExamId(eq(1L));                                          // (2)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** le decimos a mockito que verifique que del **this.questionRepository** se haya llamado al
+  **findQuestionsByExamId()** y que el argumento con el que se le ha llamado sea 1L. Podemos usar el **Argument
+  Matchers** llamado **argThat(...)** y usar una expresión lambda para agregar cierta lógica. Podríamos también haber
+  pasado directamente el argumento así: **findQuestionsByExamId(1L)**, pero no tendríamos la ventaja de poder hacer
+  cierta lógica, digamos que usando expresiones lamba hace más potente el desarrollo.
+- **(2)** le decimos a mockito que verifique que del **this.questionRepository** se haya llamado a su
+  **findQuestionsByExamId()** y que el argumento que se le haya pasado sea igual a 1L, pero eso lo expresamos con el
+  argument matchers **eq(1L)**.
+- **(1) y (2)**, con el verify, no solamente nos aseguramos que se invocó un método mock, sino también esa invocación se
+  produjo con un valor específico.
