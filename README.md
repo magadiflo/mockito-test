@@ -1165,3 +1165,84 @@ class ExamenServiceImplTest {
 
 Como se observa, es un ejemplo donde nosotros queremos **lanzar una excepción** cuando se llame al **saveQuestions()**,
 entonces una forma de mockear ese comportamiento es usando el **doThrow()**.
+
+## doAnswer
+
+Anteriormente, ya habíamos usado el **Answer** en el método **saveExamWithQuestionsReturnExamWithId()** pero de una
+manera más programática, lo usamos para poder generar un id cuando se guarde un examen. En esta oportunidad usaremos el
+**doAnswer(...)**, que tiene casi el mismo comportamiento, veamos el mismo ejemplo pero con el **doAnswer()**:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+
+    @Test
+    void doAnswerSaveExamWithQuestionsReturnExamWithId() {
+        // given
+        Exam exam = Data.EXAM_WHITOUT_ID;
+        exam.setQuestions(Data.QUESTIONS);
+
+        doAnswer(invocation -> {
+            Exam examDB = invocation.getArgument(0);
+            examDB.setId(10L);
+            return examDB;
+        }).when(this.examRepository).saveExam(any(Exam.class));
+
+        doNothing().when(this.questionRepository).saveQuestions(anyList());
+
+        // when
+        Exam examDB = this.examService.saveExam(exam);
+
+        // then
+        assertNotNull(examDB);
+        assertEquals(10L, examDB.getId());
+        assertEquals("Kubernetes", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));
+        verify(this.questionRepository).saveQuestions(anyList());
+    }
+}
+````
+
+En el ejemplo anterior usamos el método de mockito **doAnswer()** para obtener a través del **invocation** el examen
+pasado por el método **saveQuestions(...)**, luego proceder a agregarle un identificador simulando que se ha registrado
+en la base de datos.
+
+A continuación se muestra otro ejemplo, pero en este caso, dependiendo del id obtenido retornar una lista de preguntas o
+un listado vacío.
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+
+    @Test
+    void testDoAnswer() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        doAnswer(invocation -> {                                                // (1)
+            Long id = invocation.getArgument(0);                                // (2)
+            return id == 5L ? Data.QUESTIONS : List.of();
+        }).when(this.questionRepository).findQuestionsByExamId(anyLong());      // (3)
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Programación");
+
+        assertEquals(5L, exam.getId());
+        assertFalse(exam.getQuestions().isEmpty());
+    }
+}
+````
+
+Lo que estamos haciendo en el test anterior es mockear el método **findQuestionsByExamId()** del repositorio
+**this.questionRepository**, donde:
+
+- **(1)** el doAnswer nos permitirá definir un **Answer** definiendo una expresión lambda.
+- **(2)** con el **invocation** que es del tipo **InvocationOnMock** obtenemos el argumento en el índice 0. Es índice 0
+  porque es un solo argumento el que se le pasa: **findQuestionsByExamId(anyLong())**
+- **(3)** es el método mockeado, es decir, cuando se llame a este método real se aplicará el **doAnswer()**.
+

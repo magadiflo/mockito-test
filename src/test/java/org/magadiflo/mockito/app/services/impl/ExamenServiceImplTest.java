@@ -242,4 +242,45 @@ class ExamenServiceImplTest {
             this.examService.saveExam(exam);
         });
     }
+
+    @Test
+    void testDoAnswer() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        doAnswer(invocation -> {
+            Long id = invocation.getArgument(0);
+            return id == 5L ? Data.QUESTIONS : List.of();
+        }).when(this.questionRepository).findQuestionsByExamId(anyLong());
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Programación");
+
+        assertEquals(5L, exam.getId());
+        assertFalse(exam.getQuestions().isEmpty());
+    }
+
+    @Test
+    void doAnswerSaveExamWithQuestionsReturnExamWithId() {
+        // given
+        Exam exam = Data.EXAM_WHITOUT_ID;
+        exam.setQuestions(Data.QUESTIONS);
+
+        doAnswer(invocation -> {
+            Exam examDB = invocation.getArgument(0);
+            examDB.setId(10L);
+            return examDB;
+        }).when(this.examRepository).saveExam(any(Exam.class));
+
+        doNothing().when(this.questionRepository).saveQuestions(anyList());
+
+        // when
+        Exam examDB = this.examService.saveExam(exam);
+
+        // then
+        assertNotNull(examDB);
+        assertEquals(10L, examDB.getId());
+        assertEquals("Kubernetes", examDB.getName());
+
+        verify(this.examRepository).saveExam(any(Exam.class));
+        verify(this.questionRepository).saveQuestions(anyList());
+    }
 }
