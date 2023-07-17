@@ -1066,3 +1066,65 @@ class ExamenServiceImplTest {
 
 - **(1)** usamos el **MiArgsMatchers** el cual hará las validaciones definidas en la clase.
 
+## Capturando argumentos de métodos con Argument capture
+
+Úselo para capturar valores de argumento **para más assertions**. Mockito verifica los valores de los argumentos en
+estilo java natural: usando un método equals(). Esta es también la forma recomendada de hacer coincidir los argumentos
+porque hace que las pruebas sean limpias y simples. Sin embargo, en algunas situaciones, es útil afirmar ciertos
+argumentos después de la verificación real. Por ejemplo:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void testArgumentCaptor() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);          // (1)
+        verify(this.questionRepository).findQuestionsByExamId(captor.capture());    // (2)
+
+        assertEquals(1L, captor.getValue());                                        // (3)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** definimos un **ArgumentCaptor** del tipo **Long**.
+- **(2)** usamos la verificación de Mockito para capturar el valor pasado por argumento al método
+  **findQuestionsByExamId(..)**.
+- **(3)** usamos el argumento capturado para hacer un assertion (afirmación). En nuestro ejemplo, el argumento capturado
+  debe ser igual a 1L, ya que se está buscando **Aritmética** quien tiene un id = 1L.
+
+## Argument Capture con anotación @Capture
+
+En el test anterior hicimos de manera explícita y manual el uso de ArgumentCaptor, pero podríamos haber usado
+anotaciones, tal como lo veremos en este ejemplo:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+
+    @Captor
+    ArgumentCaptor<Long> captor;
+
+    /* other tests */
+    @Test
+    void testArgumentCaptorWithAnnotations() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.questionRepository).findQuestionsByExamId(captor.capture());
+
+        assertEquals(1L, captor.getValue());
+    }
+}
+````

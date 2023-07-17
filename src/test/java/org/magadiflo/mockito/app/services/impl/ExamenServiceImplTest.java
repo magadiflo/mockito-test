@@ -7,6 +7,8 @@ import org.magadiflo.mockito.app.models.Exam;
 import org.magadiflo.mockito.app.repositories.IExamRepository;
 import org.magadiflo.mockito.app.repositories.IQuestionRepository;
 import org.magadiflo.mockito.app.source.Data;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
@@ -29,6 +31,9 @@ class ExamenServiceImplTest {
 
     @InjectMocks
     private ExamenServiceImpl examService;
+
+    @Captor
+    ArgumentCaptor<Long> captor;
 
     @Test
     void findExamByName() {
@@ -203,4 +208,26 @@ class ExamenServiceImplTest {
         verify(this.questionRepository).findQuestionsByExamId(argThat(new MiArgsMatchers()));
     }
 
+    @Test
+    void testArgumentCaptor() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(this.questionRepository).findQuestionsByExamId(captor.capture());
+
+        assertEquals(1L, captor.getValue());
+    }
+
+    @Test
+    void testArgumentCaptorWithAnnotations() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.questionRepository).findQuestionsByExamId(captor.capture());
+
+        assertEquals(1L, captor.getValue());
+    }
 }
