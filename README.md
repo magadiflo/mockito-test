@@ -1510,3 +1510,82 @@ class SpyAnnotationTest {
     }
 }
 ````
+
+---
+
+## Verificando el orden de las invocaciones de los mocks
+
+Con Mockito podemos verificar el orden en el que son llamados los métodos mockeados de esta manera nos aseguramos que
+los métodos están siendo llamados en el orden correcto.
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class InvocationsTest {
+    @Mock
+    private IExamRepository examRepository;
+    @Mock
+    private IQuestionRepository questionRepository;
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+
+    @Test
+    void orderInvocationsTest() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");             // (1)
+        this.examService.findExamByNameWithQuestions("Programación");           // (2)
+
+        InOrder inOrder = inOrder(this.questionRepository);                     // (3)
+
+        inOrder.verify(this.questionRepository).findQuestionsByExamId(1L);      // (4)
+        inOrder.verify(this.questionRepository).findQuestionsByExamId(5L);      // (5)
+    }
+}
+````
+
+**DONDE**
+
+- **(1) y (2)** buscamos las preguntas del examen de "Aritmética" y a continuación en esa secuencia el de
+  "Programación".
+- **(3)** usamos el método estático de Mockito **inOrder()** para definirle el objeto mockeado, en este caso el
+  **questionRepository** del cual queremos verificar su orden de ejecución.
+- **(4) y (5)** definimos la secuencia de ejecución del método **findQuestionsByExamId()**, primero se ejecutará el de
+  **1L correspondiente al de Aritmética** y en seguida el de **5L correspondiente a Programación.** Como observamos,
+  esperamos que se ejecute en esa secuencia, ya que se están haciendo dos llamadas (1) y (2).
+
+En este segundo ejemplo de orden de invocación, ahora queremos verificar el orden de ejecución, no solo del
+**questionRepository** sino también del **examRepository**:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class InvocationsTest {
+    @Mock
+    private IExamRepository examRepository;
+    @Mock
+    private IQuestionRepository questionRepository;
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+
+    @Test
+    void orderInvocationsTest2() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+        this.examService.findExamByNameWithQuestions("Programación");
+
+        InOrder inOrder = inOrder(this.examRepository, this.questionRepository); // Definimos los repositorios de los cuales verificaremos su orden de ejecución
+
+        // Para Aritmética
+        inOrder.verify(this.examRepository).findAll();
+        inOrder.verify(this.questionRepository).findQuestionsByExamId(1L);
+
+        // Para Programación
+        inOrder.verify(this.examRepository).findAll();
+        inOrder.verify(this.questionRepository).findQuestionsByExamId(5L);
+    }
+}
+````
