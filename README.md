@@ -1330,3 +1330,183 @@ class ExamenServiceImplTest {
 > El método test **testToCallRealMethod()** lo dejaré deshabilitado, ya que anotar con @Mock la implementación
 > concreta solo fue para trabajar dicho método. Ahora el @Mock está sobre la interfaz IQuestionRepository, tal como lo
 > hemos venido trabajando hasta ahora.
+
+---
+
+## Implementando espías con Spy - Llamadas reales
+
+Un Spy es como un Mock. La diferencia es que, si queremos, puede funcionar como un objeto real y llamar a las
+implementaciones de los métodos reales. También tenemos la opción de poder simular la funcionalidad de cualquier método,
+como con el Mock.
+
+Básicamente, la diferencia es que con Mock es obligatorio simular los comportamientos de los métodos. Los Mocks son muy
+usados cuando se programa haciendo TDD (Test Driven Development o Desarrollo basado en tests), ya que no requieren de
+que haya ninguna funcionalidad implementada. Sin embargo, Spy, aunque puede simular el comportamiento de los métodos al
+igual que Mock, también nos da la oportunidad de llamar a la implementación real de los métodos del objeto. Es usado
+cuando nos interesa mantener la consistencia de los métodos ya implementados con la nueva parte que estemos
+desarrollando y realizando TDD.
+
+En este primer ejemplo usaremos el **spy()** para obtener la implementación de los métodos reales. Para eso necesitamos
+previamente que los métodos **findAll()** de la clase **ExamRepositoryImpl** y el **findQuestionsByExamId()** de la
+clase **QuestionRepositoryImpl** estén implementados, es decir retornen valores "reales", ya que serán esos métodos los
+que usaremos en las pruebas:
+
+````java
+
+public class ExamRepositoryImpl implements IExamRepository {
+    @Override
+    public List<Exam> findAll() {
+        return List.of(
+                new Exam(1L, "Aritmética"),
+                new Exam(2L, "Geometría"),
+                new Exam(3L, "Álgebra"),
+                new Exam(4L, "Trigonometría"),
+                new Exam(5L, "Programación"),
+                new Exam(6L, "Bases de Datos"),
+                new Exam(7L, "Estructura de datos"),
+                new Exam(8L, "Java 17"));
+    }
+    /* omitted code */
+}
+````
+
+````java
+public class QuestionRepositoryImpl implements IQuestionRepository {
+    @Override
+    public List<String> findQuestionsByExamId(Long id) {
+        return List.of("Pregunta 1 (real)", "Pregunta 2 (real)", "Pregunta 3 (real)",
+                "Pregunta 4 (real)", "Pregunta 5 (real)");
+    }
+    /* omitted code */
+}
+````
+
+Crearemos una nueva clase de test para implementar un método test usando **spy()**:
+
+````java
+class SpyTest {
+
+    @Test
+    void testSpyRealCalls() {
+        IExamRepository examRepository = spy(ExamRepositoryImpl.class);                         // (1)
+        IQuestionRepository questionRepository = spy(QuestionRepositoryImpl.class);             // (2)
+
+        IExamService examService = new ExamenServiceImpl(examRepository, questionRepository);   // (3)
+
+        Exam exam = examService.findExamByNameWithQuestions("Aritmética");                      // (4)
+
+        assertEquals("Aritmética", exam.getName());
+        assertEquals(1L, exam.getId());                                                         // (5)
+        assertFalse(exam.getQuestions().isEmpty());
+        assertEquals(5, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 3 (real)"));                          // (6)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** creamos un espía a la clase concreta **ExamRepositoryImpl**.
+- **(2)** creamos un espía a la clase concreta **QuestionRepositoryImpl**.
+- **(3)** creamos el objeto que será sometido al test pasándole por constructor los dos espías antes definidos.
+- **(4)** ejecuta el método a probar. Este método que estamos probando, internamente hace uso de dos llamadas:
+  ``this.examRepository.findAll()`` y del ``this.questionRepository.findQuestionsByExamId(exam.getId())`` y como en
+  nuestro método de test **testSpyRealCalls()** no hemos definido ningún Mock que haga algo cuando se llamen a esos dos
+  métodos anteriores, es decir no estamos utilizando ninguna simulación **Mockito.when(...)**, entonces **el spy() hará
+  las llamadas reales a los respectivos métodos**.
+- **(5) y (6)** corresponde a los valores reales obtenidos al llamar a los métodos reales.
+
+## Implementando espías con Spy - Simulando llamadas
+
+En el test anterior solo usamos el **spy()** para poder realizar las llamadas a los métodos reales de las clases que se
+están espiando. Ahora, si nosotros implementamos junto con el **spy()** un **Mockito.doReturn()**, es decir ahora sí
+establecemos una simulación de los métodos ``this.examRepository.findAll()`` y del
+``this.questionRepository.findQuestionsByExamId(exam.getId())`` lo que ocurrirá es que **ya no se realizará la llamada
+a los métodos reales** sino más bien **se usará los métodos mockeados (simulados)**.
+
+**IMPORTANTE**, usar el método **Mockito.doReturn(...)** para realizar el mock de los métodos, ya que si usamos lo que
+normalmente hemos venido usando **Mockito.when(...)** al estar trabajando dentro de un método test junto con el
+**spy()** muestra un comportamiento extraño, **como si se hiciera la llamada real**, aunque en realidad no lo hace, por
+eso es conveniente usar en vez del **when()** el **doReturn()**.
+
+````java
+class SpyTest {
+
+    @Test
+    void testSpyWithSimulatedCalls() {
+        IExamRepository examRepository = spy(ExamRepositoryImpl.class);                             // (1)
+        IQuestionRepository questionRepository = spy(QuestionRepositoryImpl.class);                 // (2)
+        IExamService examService = new ExamenServiceImpl(examRepository, questionRepository);       // (3)
+
+        doReturn(Data.EXAMS).when(examRepository).findAll();                                        // (4)
+        doReturn(Data.QUESTIONS).when(questionRepository).findQuestionsByExamId(anyLong());         // (5)
+
+        Exam exam = examService.findExamByNameWithQuestions("Aritmética");                          // (6)
+
+        assertEquals(1L, exam.getId());
+        assertEquals("Aritmética", exam.getName());
+        assertFalse(exam.getQuestions().isEmpty());
+        assertEquals(10, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 3"));                                     // (7)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** creamos un espía de la implementación concreta **ExamRepositoryImpl**.
+- **(2)** creamos un espía de la implementación concreta **QuestionRepositoryImpl**.
+- **(3)** creamos el objeto a probar, pasándole por constructor los dos objetos anteriores.
+- **(4)** realizamos un Mock del método **findAll()**.
+- **(5)** realizamos un Mock del método **findQuestionsByExamId**.
+- **(6)** realizamos la llamada al método a probar.
+- **(7)** afirmamos que el contenido de las preguntas corresponde a una lista de preguntas simuladas.
+
+## Implementando espías con Anotación @Spy
+
+Otra forma de usar los **spy** es con anotaciones: **@Spy**. Recordar que en los tests anteriores usamos el
+**Mockito.spy()**, bueno pues ahora usaremos anotaciones **@Spy**.
+
+Crearemos una nueva clase test **SpyAnnotationTest** y simplemente agregaremos a las propiedades la anotación
+**@Spy**, estas propiedades **tienen que ser implementaciones concretas**. Con respecto al **@InjectMocks**, esta
+anotación se usa tanto para **@Mock como para @Spy**.
+
+A continuación se muestra el mismo ejemplo que usamos en la clase **SpyTest**, pero ahora con anotaciones **@Spy**:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class SpyAnnotationTest {
+    @Spy
+    ExamRepositoryImpl examRepository;
+    @Spy
+    QuestionRepositoryImpl questionRepository;
+    @InjectMocks
+    ExamenServiceImpl examService;
+
+    @Test
+    void testSpyRealCalls() {
+        Exam exam = this.examService.findExamByNameWithQuestions("Aritmética");
+
+        assertEquals(1L, exam.getId());
+        assertEquals("Aritmética", exam.getName());
+        assertFalse(exam.getQuestions().isEmpty());
+        assertEquals(5, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 3 (real)"));
+    }
+
+    @Test
+    void testSpyWithSimulatedCalls() {
+        doReturn(Data.EXAMS).when(this.examRepository).findAll();
+        doReturn(Data.QUESTIONS).when(this.questionRepository).findQuestionsByExamId(anyLong());
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Aritmética");
+
+        assertEquals(1L, exam.getId());
+        assertEquals("Aritmética", exam.getName());
+        assertFalse(exam.getQuestions().isEmpty());
+        assertEquals(10, exam.getQuestions().size());
+        assertTrue(exam.getQuestions().contains("Pregunta 3"));
+    }
+}
+````
