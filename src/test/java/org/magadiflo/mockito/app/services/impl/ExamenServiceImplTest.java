@@ -1,5 +1,6 @@
 package org.magadiflo.mockito.app.services.impl;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -282,5 +283,22 @@ class ExamenServiceImplTest {
 
         verify(this.examRepository).saveExam(any(Exam.class));
         verify(this.questionRepository).saveQuestions(anyList());
+    }
+
+    @Test
+    @Disabled
+    void testToCallRealMethod() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        // this.questionRepository: tiene que ser definido como una implementación concreta, ya que usamos el doCallRealMethod()
+        // por eso deshabilité este método para seguir trabajando con las interfaces anotadas con Mock
+        doCallRealMethod().when(this.questionRepository).findQuestionsByExamId(anyLong());
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Aritmética");
+
+        assertEquals(1L, exam.getId());
+        assertEquals("Aritmética", exam.getName());
+        assertFalse(exam.getQuestions().isEmpty());
+        assertEquals("Pregunta 1 (real)", exam.getQuestions().get(0));
     }
 }

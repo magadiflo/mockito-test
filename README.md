@@ -1246,3 +1246,87 @@ Lo que estamos haciendo en el test anterior es mockear el método **findQuestion
   porque es un solo argumento el que se le pasa: **findQuestionsByExamId(anyLong())**
 - **(3)** es el método mockeado, es decir, cuando se llame a este método real se aplicará el **doAnswer()**.
 
+## doCallRealMethod, usándolo para la llamada real a un método mock
+
+**doCallRealMethod** nos va a permitir invocar el método real del mock (no el simulado), pero para eso debemos tener una
+implementación real y no una interfaz o clase abstracta de los objetos simulados.
+
+En primer lugar, crearemos una implementación concreta de la interfaz **IQuestionRepository** implementando solo el
+método **findQuestionsByExamId()** ya que será el que usemos para verificar que se va a llamar a este método real.
+
+````java
+public class QuestionRepositoryImpl implements IQuestionRepository {
+    @Override
+    public List<String> findQuestionsByExamId(Long id) {
+        return List.of("Pregunta 1 (real)", "Pregunta 2 (real)", "Pregunta 3 (real)",
+                "Pregunta 4 (real)", "Pregunta 5 (real)");
+    }
+
+    @Override
+    public void saveQuestions(List<String> questions) {
+
+    }
+}
+````
+
+Luego, como usaremos el **doCallRealMethod**, forzosamente necesitamos que los mocks sean del tipo concreto, **¡Ojo!
+solo de los mocks que queremos obtener sus valores reales**, por eso cambiamos solo el **IQuestionRepository** por
+el **QuestionRepositoryImpl**:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    @Mock
+    private IExamRepository examRepository;             // (1)
+
+    @Mock
+    private QuestionRepositoryImpl questionRepository;  // (2)
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+    /* omitted code */
+}
+````
+
+**DONDE**
+
+- **(1)** este objeto sí lo simularemos por eso lo dejamos con su forma más abstracta que es la interfaz.
+- **(2)** observamos que ahora estamos usando la implementación concreta, pues si vamos a usar el **doCallRealMethod**,
+  necesariamente tiene ser implementación concreta.
+
+Ahora toca implementar el test para usar el método real **findQuestionsByExamId()**:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+
+    @Test
+    void testToCallRealMethod() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        doCallRealMethod().when(this.questionRepository).findQuestionsByExamId(anyLong()); // (1)
+
+        Exam exam = this.examService.findExamByNameWithQuestions("Aritmética");
+
+        assertEquals(1L, exam.getId());
+        assertEquals("Aritmética", exam.getName());
+        assertFalse(exam.getQuestions().isEmpty());
+        assertEquals("Pregunta 1 (real)", exam.getQuestions().get(0));                     // (2)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** estamos usando el **doCallRealMethod()** para llamar al método real **findQuestionsByExamId()** y según
+  nuestra implementación concreta dicho método real nos retorna una lista de 5 preguntas.
+- **(2)** comprobamos que de las preguntas reales retornadas nos retorne ese.
+
+**NOTA**
+> El método test **testToCallRealMethod()** lo dejaré deshabilitado, ya que anotar con @Mock la implementación
+> concreta solo fue para trabajar dicho método. Ahora el @Mock está sobre la interfaz IQuestionRepository, tal como lo
+> hemos venido trabajando hasta ahora.
