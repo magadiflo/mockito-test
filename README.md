@@ -1128,3 +1128,40 @@ class ExamenServiceImplTest {
     }
 }
 ````
+
+## doThrow, usándolo para comprobar excepciones en métodos void
+
+Cuando estamos mockeando un método, generalmente cuando dicho método nos retorna algo usamos el ``when().thenReturn()``,
+por ejemplo: ``when(this.examRepository.findAll()).thenReturn(Data.EXAMS)``. Ahora, qué pasa si queremos mockear un
+método que no nos retorna nada, es decir es un **void**, allí utilizaríamos una familia de métodos que inician con
+``do``, por ejemplo:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+
+    @Test
+    void testDoThrow() {
+        Exam exam = Data.EXAM_WHITOUT_ID;
+        exam.setQuestions(Data.QUESTIONS);
+
+        doThrow(IllegalArgumentException.class).when(this.questionRepository).saveQuestions(anyList()); // (1)
+
+        assertThrows(IllegalArgumentException.class, () -> {    // (2)
+            this.examService.saveExam(exam);
+        });
+    }
+}
+````
+
+**DONDE**
+
+- **(1)**, hacer que se lance la excepción **IllegalArgumentException** cuando del **this.questionRepository** se
+  llame a su método **saveQuestion()**.
+- **(2)**, afirmamos que se haya lanzado la excepción **IllegalArgumentException**.
+
+Como se observa, es un ejemplo donde nosotros queremos **lanzar una excepción** cuando se llame al **saveQuestions()**,
+entonces una forma de mockear ese comportamiento es usando el **doThrow()**.
