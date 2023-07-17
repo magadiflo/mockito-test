@@ -13,7 +13,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -191,4 +190,17 @@ class ExamenServiceImplTest {
         verify(this.questionRepository).findQuestionsByExamId(argThat(arg -> arg != null && arg.equals(1L)));
         verify(this.questionRepository).findQuestionsByExamId(eq(1L));
     }
+
+    @Test
+    void argumentMatchersTest2() {
+//        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_NEGATIVES);
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(argThat(new MiArgsMatchers()));
+    }
+
 }

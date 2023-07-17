@@ -957,7 +957,7 @@ excepción que nos debería lanzar, porque cuando busca el examen **Aritmética*
 identificador igual a null, por lo tanto cuando se busque usando el método **findQuestionsByExamId()** el identificador
 pasado será null, es allí donde entra el segundo método mockeado lanzándonos el **IllegalArgumentException**.
 
-## Argument matchers
+## Argument matchers - uso del argThat() y eq()
 
 El **Argument matchers** es una característica de mockito que permite saber si coincide el valor real que se pasa por
 argumento en el método que se está probando y lo comparamos con los definidos en el mock (when o verify), es decir,
@@ -999,3 +999,70 @@ class ExamenServiceImplTest {
   argument matchers **eq(1L)**.
 - **(1) y (2)**, con el verify, no solamente nos aseguramos que se invocó un método mock, sino también esa invocación se
   produjo con un valor específico.
+
+## Argument Matchers - Creación de clase personalizada
+
+Ahora veremos cómo implementar un **Argument Matchers personalizado** pero con una clase. Puede ser una clase
+implementada al vuelo o una clase separada o incluso una inner class. En mi caso crearé una clase separada:
+
+````java
+public class MiArgsMatchers implements ArgumentMatcher<Long> { // (1)
+    private Long argument;
+
+    @Override
+    public boolean matches(Long argument) { // (2)
+        this.argument = argument;
+        return this.argument != null && this.argument > 0;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("El arg enviado fue %d, se esperaba que fuera un entero positivo", this.argument);
+    }
+}
+````
+
+**DONDE**
+
+- **(1) y (2)** el tipo Long corresponde al tipo de dato del argumento que es pasado como un argumentMatchers. En
+  nuestro ejemplo, el método donde aplicaremos este argumentMatchers será el **findQuestionsByExamId()**, quien
+  precisamente espera recibir un tipo de dato Long.
+
+Una vez tengamos la clase la podemos usar en nuestro método test. Crearemos uno para hacer pruebas cuando se llame al
+**finAll()** lista de los exámenes, pero retornará **exámenes con id negativo**, solo para probar nuestra clase
+**MiArgsMatchers**.
+
+````java
+public class Data {
+    public static final List<Exam> EXAMS_NEGATIVES = List.of(
+            new Exam(-1L, "Aritmética"),
+            new Exam(-2L, "Geometría"),
+            new Exam(-3L, "Álgebra"));
+}
+````
+
+Usamos nuestra clase personalizada **MiArgsMatchers** en conjunto con la verificación de Mockito:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class ExamenServiceImplTest {
+    /* @Mock e @InjectMocks */
+    /* other tests */
+    @Test
+    void argumentMatchersTest2() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_NEGATIVES);
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.examRepository).findAll();
+        verify(this.questionRepository).findQuestionsByExamId(argThat(new MiArgsMatchers())); // (1)
+    }
+}
+````
+
+**DONDE**
+
+- **(1)** usamos el **MiArgsMatchers** el cual hará las validaciones definidas en la clase.
+

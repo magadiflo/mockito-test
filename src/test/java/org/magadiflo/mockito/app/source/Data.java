@@ -15,6 +15,11 @@ public class Data {
             new Exam(7L, "Estructura de datos"),
             new Exam(8L, "Java 17"));
 
+    public static final List<Exam> EXAMS_NEGATIVES = List.of(
+            new Exam(-1L, "Aritmética"),
+            new Exam(-2L, "Geometría"),
+            new Exam(-3L, "Álgebra"));
+
     public static final List<Exam> EXAMS_ID_NULL = List.of(
             new Exam(null, "Aritmética"),
             new Exam(null, "Geometría"),
