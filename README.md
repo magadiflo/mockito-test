@@ -1589,3 +1589,86 @@ class InvocationsTest {
     }
 }
 ````
+
+## Verificando el número de invocaciones de los mocks
+
+Recordemos cuando trabajamos con el **verify()** de mockito, siempre lo hemos trabajado de la siguiente manera:
+
+````
+verify(this.questionRepository).findQuestionsByExamId(1L);
+````
+
+El código anterior, de manera implícita está verificando la ejecución de **1 sola vez** del método
+**findQuestionsByExamId(1L)**. Mientras que si deseamos verificar que un método se deba ejecutar **n** cantidad de veces
+lo que haríamos sería agregar un segundo parámetro al **verify()** con el método estático **times()**.
+
+A continuación se crea un test donde verificamos que el método **findQuestionsByExamId()** del
+**this.questionRepository** se ejecuta **n** cantidades de veces, para nuestro ejemplo, solo verificaremos que se
+ejecuta **1** sola vez. Se muestran las distintas formas de poder representar lo mismo:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class InvocationsTest {
+    @Mock
+    private IExamRepository examRepository;
+    @Mock
+    private IQuestionRepository questionRepository;
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+
+    @Test
+    void numberInvocationsTest() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        this.examService.findExamByNameWithQuestions("Aritmética");
+
+        verify(this.questionRepository).findQuestionsByExamId(1L);                  // por defecto 1 vez
+        verify(this.questionRepository, times(1)).findQuestionsByExamId(1L);
+        verify(this.questionRepository, atLeast(1)).findQuestionsByExamId(1L);
+        verify(this.questionRepository, atLeastOnce()).findQuestionsByExamId(1L);
+        verify(this.questionRepository, atMost(1)).findQuestionsByExamId(1L);
+        verify(this.questionRepository, atMostOnce()).findQuestionsByExamId(1L);
+    }
+}
+````
+
+**NOTA**
+
+Dependiendo de la cantidad de veces podemos modificar el parámetro **times()** para que se ajuste a nuestra situación,
+o podemos usar cualquiera de los otros métodos ajustando su parámetro al número de veces que se ejecutará determinado
+método.
+
+Creamos el siguiente test que va a lanzar una excepción, ya que estamos buscando un examen que no existe, por lo tanto
+debemos verificar que el **this.questionRepository.findQuestionsByExamId(exam.getId())** nunca se llame:
+
+````java
+
+@ExtendWith(MockitoExtension.class)
+class InvocationsTest {
+    @Mock
+    private IExamRepository examRepository;
+    @Mock
+    private IQuestionRepository questionRepository;
+
+    @InjectMocks
+    private ExamenServiceImpl examService;
+
+    @Test
+    void neverTest() {
+        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
+            this.examService.findExamByNameWithQuestions("Lenguaje");
+        });
+
+        assertEquals(NoSuchElementException.class, exception.getClass());
+        assertEquals("¡No existe el exam Lenguaje buscado!", exception.getMessage());
+
+        verify(this.examRepository, times(1)).findAll();
+        verify(this.questionRepository, never()).findQuestionsByExamId(anyLong()); // Nunca se ejecuta, ya que primero lanza la excepción
+        verifyNoInteractions(this.questionRepository); // Lo mismo que el never(), no hay interacción con este mock
+    }
+}
+````
