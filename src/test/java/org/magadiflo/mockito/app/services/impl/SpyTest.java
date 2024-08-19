@@ -34,8 +34,8 @@ class SpyTest {
         IQuestionRepository questionRepository = spy(QuestionRepositoryImpl.class);
         IExamService examService = new ExamenServiceImpl(examRepository, questionRepository);
 
-        doReturn(Data.EXAMS).when(examRepository).findAll();
-        doReturn(Data.QUESTIONS).when(questionRepository).findQuestionsByExamId(anyLong());
+        doReturn(Data.getExams()).when(examRepository).findAll();
+        doReturn(Data.getQuestions()).when(questionRepository).findQuestionsByExamId(anyLong());
 
         Exam exam = examService.findExamByNameWithQuestions("Aritmética");
 

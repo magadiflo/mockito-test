@@ -38,7 +38,7 @@ class ExamenServiceImplTest {
 
     @Test
     void findExamByName() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         Optional<Exam> optionalExam = this.examService.findExamByName("Aritmética");
 
@@ -60,8 +60,8 @@ class ExamenServiceImplTest {
 
     @Test
     void findExamByNameWithQuestions() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         Exam exam = this.examService.findExamByNameWithQuestions("Geometría");
 
@@ -71,7 +71,7 @@ class ExamenServiceImplTest {
 
     @Test
     void throwNoSuchElementExceptionIfNotExistsExam() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");
@@ -83,8 +83,8 @@ class ExamenServiceImplTest {
 
     @Test
     void findExamByNameWithQuestionsUsingVerify() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         Exam exam = this.examService.findExamByNameWithQuestions("Geometría");
 
@@ -97,7 +97,7 @@ class ExamenServiceImplTest {
 
     @Test
     void throwNoSuchElementExceptionIfNotExistsExamUsingVerify() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");
@@ -112,8 +112,8 @@ class ExamenServiceImplTest {
 
     @Test
     void saveExamWithoutQuestions() {
-        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(Data.EXAM);
-        Exam examDB = this.examService.saveExam(Data.EXAM);
+        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(Data.getExam());
+        Exam examDB = this.examService.saveExam(Data.getExam());
 
         assertNotNull(examDB);
         assertEquals(9L, examDB.getId());
@@ -125,8 +125,8 @@ class ExamenServiceImplTest {
 
     @Test
     void saveExamWithQuestions() {
-        Exam exam = Data.EXAM;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExam();
+        exam.setQuestions(Data.getQuestions());
 
         when(this.examRepository.saveExam(any(Exam.class))).thenReturn(exam);
         doNothing().when(this.questionRepository).saveQuestions(anyList());
@@ -144,8 +144,8 @@ class ExamenServiceImplTest {
     @Test
     void saveExamWithQuestionsReturnExamWithId() {
         // given
-        Exam exam = Data.EXAM_WHITOUT_ID;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExamWithoutId();
+        exam.setQuestions(Data.getQuestions());
 
         when(this.examRepository.saveExam(any(Exam.class))).then(new Answer<Exam>() {
             Long sequence = 8L;
@@ -173,7 +173,7 @@ class ExamenServiceImplTest {
 
     @Test
     void workingWithExceptions() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_ID_NULL);
+        when(this.examRepository.findAll()).thenReturn(Data.getExamsIdNull());
         when(this.questionRepository.findQuestionsByExamId(isNull())).thenThrow(IllegalArgumentException.class);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -187,8 +187,8 @@ class ExamenServiceImplTest {
 
     @Test
     void argumentMatchersTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -200,8 +200,8 @@ class ExamenServiceImplTest {
     @Test
     void argumentMatchersTest2() {
 //        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_NEGATIVES);
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -211,7 +211,7 @@ class ExamenServiceImplTest {
 
     @Test
     void testArgumentCaptor() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -223,7 +223,7 @@ class ExamenServiceImplTest {
 
     @Test
     void testArgumentCaptorWithAnnotations() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -234,8 +234,8 @@ class ExamenServiceImplTest {
 
     @Test
     void testDoThrow() {
-        Exam exam = Data.EXAM_WHITOUT_ID;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExamWithoutId();
+        exam.setQuestions(Data.getQuestions());
 
         doThrow(IllegalArgumentException.class).when(this.questionRepository).saveQuestions(anyList());
 
@@ -246,11 +246,11 @@ class ExamenServiceImplTest {
 
     @Test
     void testDoAnswer() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         doAnswer(invocation -> {
             Long id = invocation.getArgument(0);
-            return id == 5L ? Data.QUESTIONS : List.of();
+            return id == 5L ? Data.getQuestions() : List.of();
         }).when(this.questionRepository).findQuestionsByExamId(anyLong());
 
         Exam exam = this.examService.findExamByNameWithQuestions("Programación");
@@ -262,8 +262,8 @@ class ExamenServiceImplTest {
     @Test
     void doAnswerSaveExamWithQuestionsReturnExamWithId() {
         // given
-        Exam exam = Data.EXAM_WHITOUT_ID;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExamWithoutId();
+        exam.setQuestions(Data.getQuestions());
 
         doAnswer(invocation -> {
             Exam examDB = invocation.getArgument(0);
@@ -288,7 +288,7 @@ class ExamenServiceImplTest {
     @Test
     @Disabled
     void testToCallRealMethod() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         // this.questionRepository: tiene que ser definido como una implementación concreta, ya que usamos el doCallRealMethod()
         // por eso deshabilité este método para seguir trabajando con las interfaces anotadas con Mock
