@@ -35,8 +35,8 @@ class SpyAnnotationTest {
 
     @Test
     void testSpyWithSimulatedCalls() {
-        doReturn(Data.EXAMS).when(this.examRepository).findAll();
-        doReturn(Data.QUESTIONS).when(this.questionRepository).findQuestionsByExamId(anyLong());
+        doReturn(Data.getExams()).when(this.examRepository).findAll();
+        doReturn(Data.getQuestions()).when(this.questionRepository).findQuestionsByExamId(anyLong());
 
         Exam exam = this.examService.findExamByNameWithQuestions("Aritmética");
 

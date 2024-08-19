@@ -472,26 +472,30 @@ creamos en:
 // test/java/org/magadiflo/mockito/app/source/
 
 public class Data {
-    public static final List<Exam> EXAMS = List.of(
-            new Exam(1L, "Aritmética"),
-            new Exam(2L, "Geometría"),
-            new Exam(3L, "Álgebra"),
-            new Exam(4L, "Trigonometría"),
-            new Exam(5L, "Programación"),
-            new Exam(6L, "Bases de Datos"),
-            new Exam(7L, "Estructura de datos"),
-            new Exam(8L, "Java 17"));
+    public static List<Exam> getExams() {
+        return List.of(
+                new Exam(1L, "Aritmética"),
+                new Exam(2L, "Geometría"),
+                new Exam(3L, "Álgebra"),
+                new Exam(4L, "Trigonometría"),
+                new Exam(5L, "Programación"),
+                new Exam(6L, "Bases de Datos"),
+                new Exam(7L, "Estructura de datos"),
+                new Exam(8L, "Java 17")
+        );
+    }
 }
 ````
 
-Ahora, solo reemplazamos en los test que usan la lista para que la usen de la **Data.EXAMS**:
+Ahora, en los test que usan la lista de exámenes, simplemente lo reemplazamos por nuestro  `Data.getExams()`, tal como
+se ve a continuación:
 
 ````java
 class ExamenServiceImplTest {
     /* omitted code */
     @Test
     void findExamByName() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
         /* omitted code */
     }
     /* omitted code */
@@ -505,9 +509,12 @@ Creamos previamente una lista de preguntas en la clase **Data**:
 ````java
 public class Data {
     /* omitted code */
-    public static final List<String> QUESTIONS = List.of("Pregunta 1", "Pregunta 2", "Pregunta 3",
-            "Pregunta 4", "Pregunta 5", "Pregunta 6", "Pregunta 7", "Pregunta 8", "Pregunta 9",
-            "Pregunta 10");
+    public static List<String> getQuestions() {
+        return List.of("Pregunta 1", "Pregunta 2", "Pregunta 3",
+                "Pregunta 4", "Pregunta 5", "Pregunta 6",
+                "Pregunta 7", "Pregunta 8", "Pregunta 9",
+                "Pregunta 10");
+    }
 }
 ````
 
@@ -519,10 +526,10 @@ class ExamenServiceImplTest {
 
     @Test
     void findExamByNameWithQuestions() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);                                 // (1)
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);  // (2)
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());                                // (1)
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions()); // (2)
 
-        Exam exam = this.examService.findExamByNameWithQuestions("Geometría");                      // (3)
+        Exam exam = this.examService.findExamByNameWithQuestions("Geometría");                          // (3)
 
         assertEquals(10, exam.getQuestions().size());
         assertTrue(exam.getQuestions().contains("Pregunta 10"));
@@ -533,9 +540,9 @@ class ExamenServiceImplTest {
 **Donde**
 
 - **(1)**, le decimos a mockito, que cuando se llame al **findAll()** del **examRepository** entonces que nos retorne la
-  lista completa de los exámenes: Data.EXAMS.
+  lista completa de los exámenes: `Data.getExams()`.
 - **(2)**, cuando se llame al método **findQuestionsByExamId()** del **questionRepository** y se le pase por argumento
-  **cualquier Long (anyLong)** entonces que nos retorne la lista de preguntas: Data.QUESTIONS.
+  **cualquier Long (anyLong)** entonces que nos retorne la lista de preguntas: `Data.getQuestions()`.
 - **(3)**, es el método de la clase **ExamenServiceImpl** que estamos probando. Recordar que dicho método internamente
   hace uso de los repositorios: **examRepository y questionRepository**, por eso es la necesidad de Mocker los
   repositorios.
@@ -547,7 +554,7 @@ class ExamenServiceImplTest {
     /* omitted code */
     @Test
     void throwNoSuchElementExceptionIfNotExistsExam() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");
@@ -561,7 +568,7 @@ class ExamenServiceImplTest {
 
 Observar que en el test anterior no necesitamos mockear el:
 
-> when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+> when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
 Porque lo que estamos probando es el lanzamiento de la excepción **NoSuchElementException** y este lanzamiento debe
 ocurrir, según la implementación real, antes de llamar al **this.questionRepository.findQuestionsByExamId(...)**
@@ -575,8 +582,8 @@ definido.
 class ExamenServiceImplTest {
     @Test
     void findExamByNameWithQuestionsUsingVerify() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         Exam exam = this.examService.findExamByNameWithQuestions("Geometría");
 
@@ -605,8 +612,8 @@ como no existe el examen, se lanza la excepción, por lo tanto nunca llega al m�
 class ExamenServiceImplTest {
     @Test
     void throwNoSuchElementExceptionIfNotExistsExamUsingVerify() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");
@@ -701,7 +708,7 @@ class ExamenServiceImplTest {
 
 ### Forma 2. Habilitar anotaciones de Mockito para inyección de dependencia
 
-La segunda forma es anotando la clase test con **@ExtendWith(MockitoExtension.class)**, para eso es importante como lo
+La segunda forma es anotando la clase test con `@ExtendWith(MockitoExtension.class)`, para eso es importante como lo
 hicimos al principio del curso agregar la dependencia:
 
 ````xml
@@ -787,15 +794,15 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void saveExamWithoutQuestions() {
-        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(Data.EXAM);  // (1)
-        Exam examDB = this.examService.saveExam(Data.EXAM);                         // (2)
+        when(this.examRepository.saveExam(any(Exam.class))).thenReturn(Data.getExam());  // (1)
+        Exam examDB = this.examService.saveExam(Data.getExam());                         // (2)
 
         assertNotNull(examDB);
         assertEquals(9L, examDB.getId());
         assertEquals("Docker", examDB.getName());
 
-        verify(this.examRepository).saveExam(any(Exam.class));                      // (3)
-        verify(this.questionRepository, never()).saveQuestions(anyList());          // (4)
+        verify(this.examRepository).saveExam(any(Exam.class));                          // (3)
+        verify(this.questionRepository, never()).saveQuestions(anyList());              // (4)
     }
 }
 ````
@@ -803,10 +810,10 @@ class ExamenServiceImplTest {
 **DONDE**
 
 - **(1)** le decimos a mockito que cuando el **this.examRepository** haga un **saveExam(...)** y se le pase por
-  parámetro cualquier examen o sea un **any(Exam.class)**, entonces que nos retorne el **Data.EXAM**.
+  parámetro cualquier examen o sea un **any(Exam.class)**, entonces que nos retorne el `Data.getExam()`.
 - **(2)** es el método que vamos a probar de la clase de servicio **ExamenServiceImpl**.
-- **(3)** le decimos a mockito que verifique que del **this.examRepository** su método **saveExam()** con un parámetro *
-  *any(Exam.class)** haya sido llamado una vez (por defecto).
+- **(3)** le decimos a mockito que verifique que del **this.examRepository** su método **saveExam()** con un parámetro
+  **any(Exam.class)** haya sido llamado una vez (por defecto).
 - **(4)** le decimos a mockito que verifique que del **this.questionRepository** su método **saveQuestions()** que
   recibe un parámetro de una lista de objetos, no interesa cuál, solo que recibe una lista **anyList()** nunca se haya
   llamado, es decir **never()**. Esto debe ser cierto, ya que el examen que guardamos no tiene una lista de preguntas.
@@ -821,8 +828,8 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void saveExamWithQuestions() {
-        Exam exam = Data.EXAM;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExam();
+        exam.setQuestions(Data.getQuestions());
 
         when(this.examRepository.saveExam(any(Exam.class))).thenReturn(exam);
         doNothing().when(this.questionRepository).saveQuestions(anyList());     // (1)
@@ -860,8 +867,8 @@ class ExamenServiceImplTest {
     @Test
     void saveExamWithQuestionsReturnExamWithId() {
         // given
-        Exam exam = Data.EXAM_WHITOUT_ID;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExamWithoutId();
+        exam.setQuestions(Data.getQuestions());
 
         when(this.examRepository.saveExam(any(Exam.class))).then(new Answer<Exam>() {
             Long sequence = 8L;
@@ -896,7 +903,7 @@ when(this.examRepository.saveExam(any(Exam.class))).then(new Answer<Exam>() {
     Long sequence = 8L;
 
     @Override
-    public Exam answer(InvocationOnMock invocation) throws Throwable {
+    public Exam answer (InvocationOnMock invocation) throws Throwable {
         Exam examToSave = invocation.getArgument(0);
         examToSave.setId(sequence++);
         return examToSave;
@@ -918,10 +925,13 @@ Necesitamos crear una lista de exámenes que tengan como id = null:
 
 ````java
 public class Data {
-    public static final List<Exam> EXAMS_ID_NULL = List.of(
-            new Exam(null, "Aritmética"),
-            new Exam(null, "Geometría"),
-            new Exam(null, "Álgebra"));
+    public static List<Exam> getExamsIdNull() {
+        return List.of(
+                new Exam(null, "Aritmética"),
+                new Exam(null, "Geometría"),
+                new Exam(null, "Álgebra")
+        );
+    }
 }
 ````
 
@@ -935,7 +945,7 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void workingWithExceptions() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_ID_NULL);
+        when(this.examRepository.findAll()).thenReturn(Data.getExamsIdNull());
         when(this.questionRepository.findQuestionsByExamId(isNull())).thenThrow(IllegalArgumentException.class);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -964,8 +974,7 @@ argumento en el método que se está probando y lo comparamos con los definidos 
 son utilidades que se utilizan para verificar los argumentos pasados a los métodos simulados durante las pruebas
 unitarias.
 
-Hay varios tipos de Argument Matchers disponibles en Mockito, como **any(), eq(), isNull(), isNotNull(), anyLong(),
-etc.**
+Hay varios tipos de Argument Matchers disponibles en Mockito, como `any(), eq(), isNull(), isNotNull(), anyLong(), etc`.
 
 ````java
 
@@ -975,8 +984,8 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void argumentMatchersTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -1034,10 +1043,13 @@ Una vez tengamos la clase la podemos usar en nuestro método test. Crearemos uno
 
 ````java
 public class Data {
-    public static final List<Exam> EXAMS_NEGATIVES = List.of(
-            new Exam(-1L, "Aritmética"),
-            new Exam(-2L, "Geometría"),
-            new Exam(-3L, "Álgebra"));
+    public static List<Exam> getExamsNegatives() {
+        return List.of(
+                new Exam(-1L, "Aritmética"),
+                new Exam(-2L, "Geometría"),
+                new Exam(-3L, "Álgebra")
+        );
+    }
 }
 ````
 
@@ -1051,8 +1063,8 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void argumentMatchersTest2() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS_NEGATIVES);
-        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.QUESTIONS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExamsNegatives());
+        when(this.questionRepository.findQuestionsByExamId(anyLong())).thenReturn(Data.getQuestions());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -1081,7 +1093,7 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void testArgumentCaptor() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -1118,7 +1130,7 @@ class ExamenServiceImplTest {
     /* other tests */
     @Test
     void testArgumentCaptorWithAnnotations() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -1131,10 +1143,10 @@ class ExamenServiceImplTest {
 
 ## doThrow, usándolo para comprobar excepciones en métodos void
 
-Cuando estamos mockeando un método, generalmente cuando dicho método nos retorna algo usamos el ``when().thenReturn()``,
-por ejemplo: ``when(this.examRepository.findAll()).thenReturn(Data.EXAMS)``. Ahora, qué pasa si queremos mockear un
+Cuando estamos mockeando un método, generalmente cuando dicho método nos retorna algo usamos el `when().thenReturn()`,
+por ejemplo: `when(this.examRepository.findAll()).thenReturn(Data.getExams())`. Ahora, qué pasa si queremos mockear un
 método que no nos retorna nada, es decir es un **void**, allí utilizaríamos una familia de métodos que inician con
-``do``, por ejemplo:
+`do`, por ejemplo:
 
 ````java
 
@@ -1145,8 +1157,8 @@ class ExamenServiceImplTest {
 
     @Test
     void testDoThrow() {
-        Exam exam = Data.EXAM_WHITOUT_ID;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExamWithoutId();
+        exam.setQuestions(Data.getQuestions());
 
         doThrow(IllegalArgumentException.class).when(this.questionRepository).saveQuestions(anyList()); // (1)
 
@@ -1182,8 +1194,8 @@ class ExamenServiceImplTest {
     @Test
     void doAnswerSaveExamWithQuestionsReturnExamWithId() {
         // given
-        Exam exam = Data.EXAM_WHITOUT_ID;
-        exam.setQuestions(Data.QUESTIONS);
+        Exam exam = Data.getExamWithoutId();
+        exam.setQuestions(Data.getQuestions());
 
         doAnswer(invocation -> {
             Exam examDB = invocation.getArgument(0);
@@ -1223,11 +1235,11 @@ class ExamenServiceImplTest {
 
     @Test
     void testDoAnswer() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         doAnswer(invocation -> {                                                // (1)
             Long id = invocation.getArgument(0);                                // (2)
-            return id == 5L ? Data.QUESTIONS : List.of();
+            return id == 5L ? Data.getQuestions() : List.of();
         }).when(this.questionRepository).findQuestionsByExamId(anyLong());      // (3)
 
         Exam exam = this.examService.findExamByNameWithQuestions("Programación");
@@ -1306,7 +1318,7 @@ class ExamenServiceImplTest {
 
     @Test
     void testToCallRealMethod() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         doCallRealMethod().when(this.questionRepository).findQuestionsByExamId(anyLong()); // (1)
 
@@ -1438,8 +1450,8 @@ class SpyTest {
         IQuestionRepository questionRepository = spy(QuestionRepositoryImpl.class);                 // (2)
         IExamService examService = new ExamenServiceImpl(examRepository, questionRepository);       // (3)
 
-        doReturn(Data.EXAMS).when(examRepository).findAll();                                        // (4)
-        doReturn(Data.QUESTIONS).when(questionRepository).findQuestionsByExamId(anyLong());         // (5)
+        doReturn(Data.getExams()).when(examRepository).findAll();                                   // (4)
+        doReturn(Data.getQuestions()).when(questionRepository).findQuestionsByExamId(anyLong());    // (5)
 
         Exam exam = examService.findExamByNameWithQuestions("Aritmética");                          // (6)
 
@@ -1497,8 +1509,8 @@ class SpyAnnotationTest {
 
     @Test
     void testSpyWithSimulatedCalls() {
-        doReturn(Data.EXAMS).when(this.examRepository).findAll();
-        doReturn(Data.QUESTIONS).when(this.questionRepository).findQuestionsByExamId(anyLong());
+        doReturn(Data.getExams()).when(this.examRepository).findAll();
+        doReturn(Data.getQuestions()).when(this.questionRepository).findQuestionsByExamId(anyLong());
 
         Exam exam = this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -1532,7 +1544,7 @@ class InvocationsTest {
 
     @Test
     void orderInvocationsTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");             // (1)
         this.examService.findExamByNameWithQuestions("Programación");           // (2)
@@ -1572,7 +1584,7 @@ class InvocationsTest {
 
     @Test
     void orderInvocationsTest2() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
         this.examService.findExamByNameWithQuestions("Programación");
@@ -1620,7 +1632,7 @@ class InvocationsTest {
 
     @Test
     void numberInvocationsTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -1657,7 +1669,7 @@ class InvocationsTest {
 
     @Test
     void neverTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");

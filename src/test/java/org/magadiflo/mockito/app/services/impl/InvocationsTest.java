@@ -28,7 +28,7 @@ class InvocationsTest {
 
     @Test
     void orderInvocationsTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
         this.examService.findExamByNameWithQuestions("Programación");
@@ -41,7 +41,7 @@ class InvocationsTest {
 
     @Test
     void orderInvocationsTest2() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
 
         this.examService.findExamByNameWithQuestions("Aritmética");
@@ -57,7 +57,7 @@ class InvocationsTest {
 
     @Test
     void numberInvocationsTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         this.examService.findExamByNameWithQuestions("Aritmética");
 
@@ -71,7 +71,7 @@ class InvocationsTest {
 
     @Test
     void neverTest() {
-        when(this.examRepository.findAll()).thenReturn(Data.EXAMS);
+        when(this.examRepository.findAll()).thenReturn(Data.getExams());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
             this.examService.findExamByNameWithQuestions("Lenguaje");
